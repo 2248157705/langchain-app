@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mcp-mysql:
+    build: .
+    container_name: mcp-mysql-server
+    restart: unless-stopped
+    
+    # 修改这里：让容器保持运行，不执行具体的 node 命令
+    # 具体的 node 命令将由 Trae 通过 docker exec 触发
+    command: tail -f /dev/null
+    
+    stdin_open: true 
+    tty: true       
+
+    # 环境变量保留在这里供参考，或者供容器内脚本使用
+    environment:
+      MYSQL_HOST: xgj-db-public.rwlb.rds.aliyuncs.com
+      MYSQL_PORT: 3306

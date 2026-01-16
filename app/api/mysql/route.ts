@@ -5,11 +5,12 @@ import { HumanMessage } from '@langchain/core/messages';
 import { z } from "zod"; // 建议引入 zod 做参数校验（LangChain 推荐）
 import mysql from 'mysql2/promise'
 
+
 const dbConfig={
     host: 'xgj-db-public.rwlb.rds.aliyuncs.com',
     port: 3306,
     user: 'xgj_db_admin',
-    password: '',
+    password: 'xgj_db_admin**$#$#1',
     database: 'xgj-business',
     connectionLimit: 10,
 }
