@@ -4,9 +4,13 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { DynamicStructuredTool, HumanMessage } from "langchain";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import * as z from "zod";
+import CallbackHandler from "langfuse-langchain";
 
 
 
+
+
+process.env.LANGFUSE_DEBUG = "true"; 
 
 // ================= 配置区域 =================
 const DB_CONFIG = {
@@ -104,6 +108,14 @@ export async function GET(req: Request) {
   );
 
   let transportConnected = false;
+  // Langfuse 配置 (建议放入环境变量，也可以硬编码测试)
+const langfuseHandler=new CallbackHandler({
+  publicKey: "pk-lf-2436828a-6f66-44f3-a1c8-e0bf96738a13",      // 你的 Public Key
+  secretKey: "sk-lf-c4a1eea9-b418-4d0b-8586-ffc713540936",      // 你的 Secret Key
+  baseUrl: "http://localhost:7095", // 你的 Docker 部署地址
+  tags:['mcp-mysql-test'],
+  flushAt:1
+})
 
   try {
     // 3. 连接并获取工具
@@ -183,6 +195,7 @@ export async function GET(req: Request) {
       model: "llama3.2", // 推荐: "qwen2.5:7b" 或 "llama3.1"
       baseUrl: "http://localhost:11434",
       temperature: 0, // 工具调用场景建议降低温度
+  callbacks: [langfuseHandler], 
     });
 
 
@@ -204,6 +217,7 @@ export async function GET(req: Request) {
 
 
 
+
     // 7. 创建 Agent
     const agent = createReactAgent({
       llm: model,
@@ -212,7 +226,7 @@ export async function GET(req: Request) {
     });
 
     // 8. 执行
-    const result = await agent.invoke({ messages: [new HumanMessage(msg)] });
+    const result = await agent.invoke({ messages: [new HumanMessage(msg)]},{callbacks:[langfuseHandler]});
 
     // 9. 提取结果
     const lastMessage = result.messages[result.messages.length - 1];
@@ -233,5 +247,8 @@ export async function GET(req: Request) {
       // 注意：Stdio Transport 往往没有完美的 close 方法来 kill docker 进程
       // 这里依赖 node 进程结束自动断开管道
     }
+      console.log("正在上传 Langfuse 数据...");
+  await langfuseHandler.shutdownAsync();
+  console.log("数据上传完成，程序退出");
   }
 }
